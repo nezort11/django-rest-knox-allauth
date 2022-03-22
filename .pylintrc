@@ -1,0 +1,190 @@
+[MASTER]
+
+load-plugins=
+
+extension-pkg-allow-list=
+extension-pkg-whitelist=
+unsafe-load-any-extension=no
+fail-on=
+fail-under=10.0
+ignore=CVS,build
+ignore-paths=
+ignore-patterns=
+jobs=1
+limit-inference-results=100
+persistent=yes
+py-version=3.10
+suggestion-mode=yes
+
+[MESSAGES CONTROL]
+
+disable=raw-checker-failed,
+        bad-inline-option,
+        locally-disabled,
+        file-ignored,
+        suppressed-message,
+        useless-suppression,
+        deprecated-pragma,
+        use-symbolic-message-instead,
+        missing-docstring,invalid-name,
+        invalid-name
+enable=
+confidence=
+
+[REPORTS]
+
+score=yes
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+output-format=colorized
+reports=no
+
+[REFACTORING]
+
+max-nested-blocks=5
+never-returning-functions=sys.exit,argparse.parse_error
+
+[LOGGING]
+
+logging-format-style=new
+logging-modules=logging
+
+[SPELLING]
+
+max-spelling-suggestions=4
+spelling-dict=
+spelling-ignore-comment-directives=fmt: on,fmt: off,noqa:,noqa,nosec,isort:skip,mypy:
+spelling-ignore-words=
+spelling-private-dict-file=
+spelling-store-unknown-words=no
+
+[MISCELLANEOUS]
+
+notes=FIXME,
+      NOTE,
+      XXX,
+      TODO
+
+
+[TYPECHECK]
+
+contextmanager-decorators=contextlib.contextmanager
+generated-members=
+ignore-mixin-members=yes
+mixin-class-rgx=.*[Mm]ixin
+ignore-none=yes
+ignore-on-opaque-inference=yes
+ignored-classes=optparse.Values,thread._local,_thread._local
+ignored-modules=
+missing-member-hint=yes
+missing-member-hint-distance=1
+missing-member-max-choices=1
+signature-mutators=
+
+[VARIABLES]
+
+additional-builtins=
+allow-global-unused-variables=yes
+allowed-redefined-builtins=
+callbacks=cb_,
+          _cb
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+ignored-argument-names=_.*|^ignored_|^unused_
+init-import=no
+redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
+
+[FORMAT]
+
+expected-line-ending-format=
+ignore-long-lines='^\s*(# )?<?https?://\S+>?$'
+indent-after-paren=4
+indent-string='    '
+max-line-length=120
+max-module-lines=1000
+single-line-class-stmt=no
+single-line-if-stmt=no
+
+[SIMILARITIES]
+
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=no
+ignore-signatures=no
+min-similarity-lines=4
+
+[BASIC]
+
+argument-naming-style=snake_case
+attr-naming-style=snake_case
+class-naming-style=PascalCase  # TitleCase
+const-naming-style=UPPER_CASE
+function-naming-style=snake_case
+method-naming-style=snake_case
+module-naming-style=snake_case
+variable-naming-style=snake_case
+class-attribute-naming-style=any
+class-const-naming-style=UPPER_CASE
+docstring-min-length=-1
+good-names=i,
+           j,
+           k,
+           n,
+           ex,
+           Run,
+           _
+include-naming-hint=no
+inlinevar-naming-style=any
+no-docstring-rgx=^_
+property-classes=abc.abstractproperty
+
+[STRING]
+
+check-quote-consistency=yes
+check-str-concat-over-line-jumps=no
+
+[IMPORTS]
+
+allow-any-import-level=
+allow-wildcard-with-all=no
+analyse-fallback-blocks=no
+deprecated-modules=
+ext-import-graph=
+import-graph=
+int-import-graph=
+known-standard-library=
+known-third-party=enchant
+preferred-modules=
+
+[CLASSES]
+
+check-protected-access-in-special-methods=no
+defining-attr-methods=__init__,
+                      __new__,
+                      setUp,
+                      __post_init__
+exclude-protected=_asdict,
+                  _fields,
+                  _replace,
+                  _source,
+                  _make
+valid-classmethod-first-arg=cls
+valid-metaclass-classmethod-first-arg=cls
+
+[DESIGN]
+
+exclude-too-few-public-methods=
+ignored-parents=
+max-args=5
+max-attributes=7
+max-bool-expr=5
+max-branches=12
+max-locals=15
+max-parents=13
+max-public-methods=20
+max-returns=6
+max-statements=50
+min-public-methods=2
+
+[EXCEPTIONS]
+
+overgeneral-exceptions=BaseException,
+                       Exception

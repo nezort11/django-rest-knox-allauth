@@ -1,0 +1,7 @@
+django==4.0.3
+django-allauth==0.49.0
+djangorestframework==3.13.1
+django-rest-knox==4.2.0
+
+black==22.1.0
+pylint==2.12.2
