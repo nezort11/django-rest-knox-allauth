@@ -27,7 +27,8 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead,
         missing-docstring,invalid-name,
-        invalid-name
+        invalid-name,
+        abstract-method
 enable=
 confidence=
 

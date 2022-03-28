@@ -1,4 +1,4 @@
-from allauth import app_settings as allauth_settings
+from allauth.account import app_settings as allauth_settings
 from allauth.account.utils import complete_signup
 from django.contrib.auth.signals import user_logged_in
 from django.utils import timezone

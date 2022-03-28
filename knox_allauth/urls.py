@@ -4,8 +4,8 @@ from .views import LoginView, LogoutAllView, LogoutView, RegisterView, UserView
 
 urlpatterns = [
     path(r"login/", LoginView.as_view(), name="rest_login"),
-    path(r"user/", RegisterView.as_view(), name="rest_user"),
-    path(r"register/", UserView.as_view(), name="rest_register"),
+    path(r"me/", UserView.as_view(), name="rest_user"),
+    path(r"register/", RegisterView.as_view(), name="rest_register"),
     path(r"logout/", LogoutView.as_view(), name="rest_logout"),
     path(r"logout/all/", LogoutAllView.as_view(), name="rest_logout_all"),
     # Password management

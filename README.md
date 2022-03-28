@@ -2,49 +2,50 @@
 
 Inspired by dj-rest-auth.
 
-This can be used as an installed package or to take inspiration (code snippets into your project).
+This can be used as an installed package or to take inspiration (code snippets
+into your project).
 
 A package that combines together:
 
 **Package that integrates**
 
--   django
+- django
 
--   django-allauth
+- django-allauth
 
--   django-rest-framework
+- django-rest-framework
 
--   django-rest-knox
+- django-rest-knox
 
 ... and provides default API endpoints.
 
 It support all the allauth functionality:
 
--   authentication
+- authentication
 
--   account management
+- account management
 
--   account confirmation
+- account confirmation
 
--   social authentication
+- social authentication
 
 Supported functionality (API endpoints):
 
--   Local and social registration
+- Local and social registration
 
--   Email-address management
+- Email-address management
 
--   Password management
+- Password management
 
--   Email-address verification
+- Email-address verification
 
 It provides nothing special just a boilerplate:
 
--   serializers
+- serializers
 
--   views
+- views
 
--   urls
+- urls
 
 which all can be customized if you copy the app directly (not installing).
 
@@ -54,33 +55,48 @@ It tries to be smaller endpoints than dj-rest-auth.
 
 Alternative endpoints:
 
--   django-rest-auth (not maintained)
+- django-rest-auth (not maintained)
 
--   djoser / django-rest-knox (no registration endpoints - allauth integration)
+- djoser / django-rest-knox (no registration endpoints - allauth integration)
 
--   dj-rest-auth (doesn't support django-rest-knox)
+- dj-rest-auth (doesn't support django-rest-knox)
 
 Alternative backends:
 
--   ...
+- ...
 
 ## Installation
 
-Either install using pip or include the app directly into your project under source control (for customization).
+Either install using pip or include the app directly into your project under
+source control (for customization).
+
+The are 2 way to use this package:
+
+1. Include it as part of your project (for customization purposes). Copy
+   `knox_allauth` folder into the root of your project (near `manage.py`).
+
+2. Install it as `pip install knox_allauth`
 
 # Django REST knox auth
 
-[dj-rest-auth](https://github.com/iMerica/dj-rest-auth) but only for [django-rest-knox](https://github.com/James1345/django-rest-knox) authentication backend.
+[dj-rest-auth](https://github.com/iMerica/dj-rest-auth) but only for
+[django-rest-knox](https://github.com/James1345/django-rest-knox) authentication
+backend.
 
 ## Problem
 
 The problem this package is trying to solve is:
 
--   `django-rest-knox` doesn't provide default registration serializers, views, urls (because registration is a very complex thing, and can be either email or social). You need to implement registration for it to work!
+- `django-rest-knox` doesn't provide default registration serializers, views,
+  urls (because registration is a very complex thing, and can be either email or
+  social). You need to implement registration for it to work!
 
--   `djnago-allauth` provides registration views, templates, models but only for Django not django-rest-framework's token auth. You need to add additional serializers, views and urls for it to work!
+- `djnago-allauth` provides registration views, templates, models but only for
+  Django not django-rest-framework's token auth. You need to add additional
+  serializers, views and urls for it to work!
 
-I need both registration (email/social) and a reliable token authentication backend.
+I need both registration (email/social) and a reliable token authentication
+backend.
 
 ## Development
 
@@ -96,15 +112,20 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Configuration is the same as for allauth (settings) + for django, rest framework and knox.
+Configuration is the same as for allauth (settings) + for django, rest framework
+and knox.
 
-Add allauth's login backend: `allauth.account.auth_backends.AuthenticationBackend`.
+Add allauth's login backend:
+`allauth.account.auth_backends.AuthenticationBackend`.
 
-Add knox's `TokenAuthentication`, it turns request with `Authorization` header into
+Add knox's `TokenAuthentication`, it turns request with `Authorization` header
+into
 
 ## Setup
 
-Add `allauth` and `allauth.account` to `INSTALLED_APPS`. `allauth.social_account` is optional for social authentication (will add additional email model).
+Add `allauth` and `allauth.account` to `INSTALLED_APPS`.
+`allauth.social_account` is optional for social authentication (will add
+additional email model).
 
 ```py
 INSTALLED_APPS = [
@@ -147,7 +168,9 @@ REST_FRAMEWORK = {
 Include knox-auth's authentication endpoints url patterns:
 
 ```py
-
+urls = [
+  path(r"api/auth/", include("knox_allauth.urls")),
+]
 ```
 
 ## Boilerplate settings
@@ -172,13 +195,15 @@ django-rest-knox:
 from datetime import timedelta
 from rest_framework.settings import api_settings
 
+# django-rest-knox
+#
 REST_KNOX = {
+    "AUTH_HEADER_PREFIX": "Token",
+    "TOKEN_TTL": timedelta(hours=24),
     "SECURE_HASH_ALGORITHM": "cryptography.hazmat.primitives.hashes.SHA512",
     "AUTH_TOKEN_CHARACTER_LENGTH": 64,
-    "TOKEN_TTL": timedelta(hours=10),
     "TOKEN_LIMIT_PER_USER": None,
     "AUTO_REFRESH": False,
-    "EXPIRY_DATETIME_FORMAT": api_settings.DATETIME_FORMAT,
 }
 ```
 

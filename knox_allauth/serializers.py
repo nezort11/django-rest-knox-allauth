@@ -91,8 +91,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["email", "username"]
-        read_only_fields = ["email", "username"]
+        fields = []
+        read_only_fields = []
+
+        if allauth_settings.USER_MODEL_USERNAME_FIELD:
+            fields.append("username")
+            read_only_fields.append("username")
+
+        if allauth_settings.USER_MODEL_EMAIL_FIELD:
+            fields.append("email")
+            read_only_fields.append("email")
 
 
 class AllauthRegisterSerializer(serializers.Serializer):
@@ -113,6 +121,7 @@ class AllauthRegisterSerializer(serializers.Serializer):
         adapter = get_adapter()
         user = adapter.new_user(request)
         cleaned_data = self.get_cleaned_data()
+        self.cleaned_data = cleaned_data
         user = adapter.save_user(request, user, self, commit=False)
 
         if "password1" in cleaned_data:
