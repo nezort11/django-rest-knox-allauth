@@ -19,8 +19,20 @@ class AllauthLoginSerializer(serializers.Serializer):
     Raise ValidationError if not able to login for any reason.
     """
 
-    username = serializers.CharField(required=False, allow_blank=True)
-    email = serializers.CharField(required=False, allow_blank=True)
+    if (
+        allauth_settings.AUTHENTICATION_METHOD
+        == allauth_settings.AuthenticationMethod.USERNAME
+    ):
+        username = serializers.CharField()
+    elif (
+        allauth_settings.AUTHENTICATION_METHOD
+        == allauth_settings.AuthenticationMethod.EMAIL
+    ):
+        email = serializers.CharField()
+    else:
+        username = serializers.CharField(required=False, allow_blank=True)
+        email = serializers.CharField(required=False, allow_blank=True)
+
     password = serializers.CharField(write_only=True, trim_whitespace=False)
 
     def validate(self, attrs: dict) -> dict:
@@ -32,24 +44,11 @@ class AllauthLoginSerializer(serializers.Serializer):
         # Validate credentials
         if (
             allauth_settings.AUTHENTICATION_METHOD
-            == allauth_settings.AuthenticationMethod.EMAIL
+            == allauth_settings.AuthenticationMethod.USERNAME_EMAIL
         ):
-            if not (email and password):
-                raise serializers.ValidationError(
-                    "Must include `email` and `password`."
-                )
-        elif (
-            allauth_settings.AUTHENTICATION_METHOD
-            == allauth_settings.AuthenticationMethod.USERNAME
-        ):
-            if not (username and password):
-                raise serializers.ValidationError(
-                    "Must include `username` and `password`."
-                )
-        else:
             if not (email and password) and not (username and password):
                 raise serializers.ValidationError(
-                    "Must include `email` or `username` and `password`."
+                    "Must include `email`/`username` and `password`."
                 )
 
         # Will authentication using email, username or either of this depending on `AUTHENTICATION_METHOD`
@@ -109,12 +108,14 @@ class AllauthRegisterSerializer(serializers.Serializer):
     Controlled via allauth's settings.
     """
 
-    username = serializers.CharField(
-        max_length=get_username_max_length(),
-        min_length=allauth_settings.USERNAME_MIN_LENGTH,
-        required=allauth_settings.USERNAME_REQUIRED,
-    )
-    email = serializers.EmailField(required=allauth_settings.EMAIL_REQUIRED)
+    if allauth_settings.USER_MODEL_USERNAME_FIELD:
+        username = serializers.CharField(
+            max_length=get_username_max_length(),
+            min_length=allauth_settings.USERNAME_MIN_LENGTH,
+        )
+    if allauth_settings.USER_MODEL_EMAIL_FIELD:
+        email = serializers.EmailField()
+
     password = serializers.CharField(write_only=True, trim_whitespace=False)
 
     def save(self, request: Request) -> User:

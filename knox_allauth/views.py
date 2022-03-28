@@ -3,6 +3,7 @@ from allauth.account.utils import complete_signup
 from django.contrib.auth.signals import user_logged_in
 from django.utils import timezone
 from django.views.decorators.debug import sensitive_post_parameters
+from drf_spectacular.utils import extend_schema, inline_serializer
 from knox.models import AuthToken
 from knox.settings import knox_settings
 from knox.views import LogoutAllView as KnoxLogoutAllView
@@ -38,6 +39,19 @@ class LoginView(APIView):
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
+    @extend_schema(
+        request=AllauthLoginSerializer,
+        responses={
+            200: inline_serializer(
+                "AuthTokenSerializer",
+                {
+                    "expiry": serializers.DateTimeField(),
+                    "token": serializers.CharField(),
+                    "user": UserSerializer(),
+                },
+            )
+        },
+    )
     def post(self, *args, **kwargs):
         # Authentication request (get user instance) using AllauthLoginSerializer
         serializer = AllauthLoginSerializer(
@@ -103,6 +117,7 @@ class RegisterView(APIView):
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
 
+    @extend_schema(request=AllauthRegisterSerializer, responses={201: None})
     def post(self, *args, **kwargs):
         serializer = AllauthRegisterSerializer(
             self.request.data,

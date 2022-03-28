@@ -28,7 +28,9 @@ disable=raw-checker-failed,
         use-symbolic-message-instead,
         missing-docstring,invalid-name,
         invalid-name,
-        abstract-method
+        abstract-method,
+        unused-import
+
 enable=
 confidence=
 
