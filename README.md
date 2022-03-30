@@ -179,14 +179,21 @@ In order to make allauth suitable for API user our patched account adapter:
 ACCOUNT_ADAPTER = "knox_allauth.adapters.AccountAdapter"
 ```
 
-## Email confirmation
+## Email confirmation & password reset
 
 In order for email confirmation to work, you will need to set a frontend URL
 setting (e.g. `https://frontend.com/confirm/email/{key}`). It will be formatted
 with confirmation `key` and included in the confirmation message.
 
 ```py
-KNOX_ALLAUTH_CONFIRMATION_URL = env("DJANGO_CONFIRMATION_URL", "http://example.com/confirm/email/{key}")
+KNOX_ALLAUTH_EMAIL_CONFIRMATION_URL = env(
+    "DJANGO_KNOX_ALLAUTH_EMAIL_CONFIRMATION_URL",
+    default="http://example.com/confirm/email/{key}",
+)
+KNOX_ALLAUTH_PASSWORD_RESET_URL = env(
+    "DJANGO_KNOX_ALLAUTH_PASSWORD_RESET_URL",
+    default="http://example.com/reset/password/{uid}/{key}",
+)
 ```
 
 Example email confirmation message:

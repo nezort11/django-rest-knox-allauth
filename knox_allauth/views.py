@@ -1,17 +1,22 @@
 from allauth.account import app_settings as allauth_settings
+from allauth.account.models import (
+    EmailAddress,
+    EmailConfirmation,
+    EmailConfirmationHMAC,
+)
 from allauth.account.utils import complete_signup
 from django.contrib.auth.signals import user_logged_in
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views.decorators.debug import sensitive_post_parameters
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
 from knox.models import AuthToken
 from knox.settings import knox_settings
 from knox.views import LogoutAllView as KnoxLogoutAllView
 from knox.views import LogoutView as KnoxLogoutView
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import serializers, status
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import DateTimeField
@@ -21,6 +26,11 @@ from rest_framework.viewsets import GenericViewSet
 from .serializers import (
     AllauthLoginSerializer,
     AllauthRegisterSerializer,
+    EmailResendVerificationSerializer,
+    EmailVerifySerializer,
+    PasswordChangeSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetSerializer,
     UserSerializer,
 )
 
@@ -142,12 +152,14 @@ class RegisterView(APIView):
         return Response(data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(request=None, responses=None)
 class LogoutView(KnoxLogoutView):
     """Delete the session token associated with the incoming authenticated request."""
 
     pass
 
 
+@extend_schema(request=None, responses=None)
 class LogoutAllView(KnoxLogoutAllView):
     """Delete all session tokens associated with the authenticated user."""
 
@@ -211,7 +223,7 @@ class EmailResendVerificationView(APIView):
         request=EmailResendVerificationSerializer,
         responses={
             200: inline_serializer(
-                "EmailIsVerified",
+                "EmailResendVerificationView",
                 fields={
                     "detail": serializers.CharField(default="Verification e-mail sent.")
                 },
@@ -233,19 +245,120 @@ class EmailResendVerificationView(APIView):
 # Password
 
 
-class PasswordResetView:
-    pass
+class PasswordResetView(APIView):
+    """Request password reset via email."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["password"],
+        request=PasswordResetSerializer,
+        responses={
+            200: inline_serializer(
+                "PasswordResetView",
+                fields={
+                    "detail": serializers.CharField(
+                        default="Password reset e-mail has been sent."
+                    )
+                },
+            ),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = PasswordResetSerializer(
+            data=request.data,
+            context={
+                "request": self.request,
+                "format": self.format_kwarg,
+                "view": self,
+            },
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Return the success message with OK HTTP status
+        return Response(
+            {"detail": "Password reset e-mail has been sent."},
+        )
 
 
-class PasswordResetConfirmView:
-    pass
+class PasswordResetConfirmView(APIView):
+    """Reset password using uid and key sent in email."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @method_decorator(sensitive_post_parameters("new_password"))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    @extend_schema(
+        tags=["password"],
+        request=PasswordResetConfirmSerializer,
+        responses={
+            200: inline_serializer(
+                "PasswordResetConfirmView",
+                fields={
+                    "detail": serializers.CharField(
+                        default="Password has been reset with the new password."
+                    )
+                },
+            ),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = PasswordResetConfirmSerializer(
+            data=request.data,
+            context={
+                "request": self.request,
+                "format": self.format_kwarg,
+                "view": self,
+            },
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Password has been reset with the new password."})
 
 
-class PasswordChangeView:
-    pass
+class PasswordChangeView(APIView):
+    """Change password using active session token and old password."""
+
+    permission_classes = [IsAuthenticated]
+
+    @method_decorator(sensitive_post_parameters("old_password", "new_password"))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    @extend_schema(
+        tags=["password"],
+        request=PasswordChangeSerializer,
+        responses={
+            200: inline_serializer(
+                "PasswordChangeView",
+                fields={
+                    "detail": serializers.CharField(
+                        default="New password has been saved."
+                    )
+                },
+            ),
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = PasswordChangeSerializer(
+            data=request.data,
+            context={
+                "request": self.request,
+                "format": self.format_kwarg,
+                "view": self,
+            },
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "New password has been saved."})
 
 
-# Social authentication/management
+# Social
 
 
 class SocialLoginView:

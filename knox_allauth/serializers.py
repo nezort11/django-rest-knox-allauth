@@ -1,10 +1,21 @@
 from allauth.account import app_settings as allauth_settings
 from allauth.account.adapter import get_adapter
-from allauth.account.utils import setup_user_email
+from allauth.account.forms import default_token_generator
+from allauth.account.utils import (
+    filter_users_by_email,
+    setup_user_email,
+    url_str_to_user_pk,
+    user_pk_to_url_str,
+    user_username,
+)
 from allauth.utils import email_address_exists, get_username_max_length
-from django.contrib.auth import authenticate, get_user_model
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model, password_validation
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
+from django.utils.encoding import force_str
 from rest_framework import serializers
 from rest_framework.request import Request
 
@@ -165,16 +176,118 @@ class AllauthRegisterSerializer(serializers.Serializer):
 # Password
 
 
-class PasswordResetSerializer:
-    pass
+class PasswordResetSerializer(serializers.Serializer):
+    """Serializer for resetting user password using email."""
+
+    email = serializers.EmailField()
+
+    def validate(self, attrs):
+        return attrs
+
+    def validate_email(self, email):
+        return get_adapter().clean_email(email)
+
+    def save(self):
+        request = self.context.get("request")
+        current_site = get_current_site(request)
+        email = self.validated_data.get("email")
+        token_generator = default_token_generator
+
+        # Should be only a single user
+        users = filter_users_by_email(email=email, is_active=True)
+
+        for user in users:
+            uid = user_pk_to_url_str(user)
+            temp_key = token_generator.make_token(user)
+
+            # Password reset template context
+            context = {
+                "request": request,
+                "current_site": current_site,
+                "user": user,
+                "password_reset_url": settings.KNOX_ALLAUTH_PASSWORD_RESET_URL.format(
+                    uid=uid, key=temp_key
+                ),
+            }
+
+            if (
+                allauth_settings.AUTHENTICATION_METHOD
+                != allauth_settings.AuthenticationMethod.EMAIL
+            ):
+                context["username"] = user_username(user)
+
+            # Send email for password resetting
+            get_adapter(request).send_mail(
+                template_prefix="account/email/password_reset_key",
+                email=email,
+                context=context,
+            )
 
 
-class PasswordResetConfirmSerializer:
-    pass
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Serializer for changing password without entering the old password using email uid and token."""
+
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(
+        max_length=128,
+        trim_whitespace=False,
+        help_text=password_validation.password_validators_help_text_html(),
+    )
+
+    def validate(self, attrs):
+        # Decode the uid to uid to get user object
+        try:
+            uid = force_str(url_str_to_user_pk(attrs["uid"]))
+            self.user = User._default_manager.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise serializers.ValidationError(
+                {"uid": ["Invalid encoded user id value."]}
+            )
+
+        if not default_token_generator.check_token(self.user, attrs["token"]):
+            raise serializers.ValidationError({"token": ["Invalid user token."]})
+
+        # Run password validation (None if valid, DjangoValidationError if invalid)
+        new_password = attrs.get("new_password")
+        password_validation.validate_password(new_password, self.user)
+
+        return attrs
+
+    def save(self):
+        """Set new validated password and save changes."""
+        new_password = self.validated_data["new_password"]
+        self.user.set_password(new_password)
+        self.user.save()
+        return self.user
 
 
-class PasswordChangeSerializer:
-    pass
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(max_length=128)
+    new_password = serializers.CharField(max_length=128)
+
+    def validate_old_password(self, old_password):
+        user = self.context["request"].user
+        if not user.check_password(old_password):
+            raise serializers.ValidationError(
+                "Your old password was entered incorrectly. Please enter it again."
+            )
+
+        return old_password
+
+    def validate_new_password(self, new_password):
+        user = self.context["request"].user
+        password_validation.validate_password(new_password, user)
+
+        return new_password
+
+    def save(self):
+        """Set new validated password and save changes."""
+        user = self.context["request"].user
+        new_password = self.validated_data["new_password"]
+        user.set_password(new_password)
+        user.save()
+        return user
 
 
 # Email
