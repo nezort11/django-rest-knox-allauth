@@ -173,6 +173,44 @@ urls = [
 ]
 ```
 
+In order to make allauth suitable for API user our patched account adapter:
+
+```py
+ACCOUNT_ADAPTER = "knox_allauth.adapters.AccountAdapter"
+```
+
+## Email confirmation
+
+In order for email confirmation to work, you will need to set a frontend URL
+setting (e.g. `https://frontend.com/confirm/email/{key}`). It will be formatted
+with confirmation `key` and included in the confirmation message.
+
+```py
+KNOX_ALLAUTH_CONFIRMATION_URL = env("DJANGO_CONFIRMATION_URL", "http://example.com/confirm/email/{key}")
+```
+
+Example email confirmation message:
+
+```
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: [example.com] Please Confirm Your E-mail Address
+From: webmaster@localhost
+To: nezort@gmail.com
+Date: Tue, 29 Mar 2022 08:34:10 -0000
+Message-ID: <164854285092.3212.17637242588782667486@macbook-air.sknt.ru>
+
+Hello from example.com!
+
+You're receiving this e-mail because user nezort@gmail.com has given your e-mail address to register an account on example.com.
+
+To confirm this is correct, go to http://example.com/confirm/email/Ng:1nZ7Io:DJvc6AMzsbprct2TqJIrouJLc2aQlgr2d64kwY0nEDg
+
+Thank you for using example.com!
+example.com
+```
+
 ## Boilerplate settings
 
 django-allauth:
@@ -204,6 +242,22 @@ REST_KNOX = {
     "AUTH_TOKEN_CHARACTER_LENGTH": 64,
     "TOKEN_LIMIT_PER_USER": None,
     "AUTO_REFRESH": False,
+}
+```
+
+## Documentation
+
+All API endpoints are inline documenting using `drf-spectacular`, so it's
+required to install it. Here is some boilerplate settings:
+
+```py
+# drf-spectacular
+#
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Address API",
+    "DESCRIPTION": "Documentation of API endpoints of Address",
+    "VERSION": "1.0.0",
+    "SCHEMA_PATH_PREFIX": "/api",
 }
 ```
 

@@ -154,7 +154,83 @@ class LogoutAllView(KnoxLogoutAllView):
     pass
 
 
-# Password management
+# Email
+
+
+class EmailVerifyView(APIView):
+    """Verify email address using random key sent in confirmation email."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["email"],
+        request=EmailVerifySerializer,
+        responses={
+            200: inline_serializer(
+                "EmailIsVerified",
+                fields={
+                    "detail": serializers.CharField(
+                        default="E-mail verification is successful."
+                    )
+                },
+            ),
+            404: OpenApiResponse(description="Invalid confrimation key."),
+        },
+    )
+    def post(self, *args, **kwargs):
+        serializer = EmailVerifySerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        key = serializer.validated_data["key"]
+
+        emailconfirmation = EmailConfirmationHMAC.from_key(key)
+
+        if not emailconfirmation:
+            try:
+                emailconfirmation = (
+                    EmailConfirmation.objects.all_valid()
+                    .select_related("email_address__user")
+                    .get(key=key.lower())
+                )
+            except EmailConfirmation.DoesNotExist:
+                raise NotFound
+
+        emailconfirmation.confirm(self.request)
+
+        return Response({"detail": "E-mail verification is successful."})
+
+
+class EmailResendVerificationView(APIView):
+    """Resend email verification to the passed email (if it exists and is not verified already)."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["email"],
+        request=EmailResendVerificationSerializer,
+        responses={
+            200: inline_serializer(
+                "EmailIsVerified",
+                fields={
+                    "detail": serializers.CharField(default="Verification e-mail sent.")
+                },
+            ),
+        },
+    )
+    def post(self, *args, **kwargs):
+        serializer = EmailResendVerificationSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        email_address = EmailAddress.objects.filter(email=email).first()
+        if email_address and not email_address.verified:
+            email_address.send_confirmation(self.request)
+
+        return Response({"detail": "Verification e-mail sent."})
+
+
+# Password
 
 
 class PasswordResetView:
@@ -166,17 +242,6 @@ class PasswordResetConfirmView:
 
 
 class PasswordChangeView:
-    pass
-
-
-# Email management
-
-
-class EmailVerifyView:
-    pass
-
-
-class EmailResendVerificationView:
     pass
 
 
